@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google drive search app</title>
+</head>
+<body>
+    <input type="text" name="query" id="query">
+    {% if search %}
+        <button type="reset" id="reset_search">Reset Search</button>
+    {% else %}
+        <button type="submit" id="search">Search</button>
+    {% endif %}
+</body>
+</html>
