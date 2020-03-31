@@ -9,7 +9,7 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import requests
 
-from gdriveloader import GDriveFiles
+from gdriveloader import GDriveFiles, GDriveIndex
 
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
@@ -56,28 +56,32 @@ def site_map():
 
 
 @app.route('/load')
+@app.route('/reload')
 def load_files():
-    if 'credentials' not in flask.session:
+    try:
+        if 'credentials' not in flask.session:
+            return flask.redirect('authorize')
+
+        # Load credentials from the session.
+        credentials = google.oauth2.credentials.Credentials(
+            **flask.session['credentials'])
+
+        drive = googleapiclient.discovery.build(
+            API_SERVICE_NAME, API_VERSION, credentials=credentials)
+        gfiles = GDriveFiles(drive, flask.session['credentials']['client_id'])
+        gfiles.load()
+        return render_template("load.html", **gfiles.get_timers_load())
+    except:
         return flask.redirect('authorize')
-
-    # Load credentials from the session.
-    credentials = google.oauth2.credentials.Credentials(
-        **flask.session['credentials'])
-
-    if not credentials.valid or credentials.refresh_token is None:
-        return flask.redirect('authorize')
-
-    drive = googleapiclient.discovery.build(
-        API_SERVICE_NAME, API_VERSION, credentials=credentials)
-    gfiles = GDriveFiles(drive, "drive_files", flask.session['credentials']['client_id'])
-    gfiles.load()
-    return render_template("load.html", **gfiles.get_timers_load())
 
 
 @app.route('/gdrive-search')
 @app.route('/gdrive-search/<query>')
 def search(query=None):
     context = {"search": query is not None}
+    gindex = GDriveIndex(flask.session['credentials']['client_id'])
+    if query is not None:
+        context["docs"] = gindex.find(query)
     return render_template("search.html", **context)
 
 
@@ -89,8 +93,6 @@ def test_api_request():
     # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
         **flask.session['credentials'])
-    if not credentials.valid or credentials.refresh_token is None:
-        return flask.redirect('authorize')
 
     drive = googleapiclient.discovery.build(
         API_SERVICE_NAME, API_VERSION, credentials=credentials)
@@ -150,7 +152,7 @@ def oauth2callback():
     credentials = flow.credentials
     flask.session['credentials'] = credentials_to_dict(credentials)
 
-    return flask.redirect(flask.url_for('test_api_request'))
+    return flask.redirect(flask.url_for('index'))
 
 
 @app.route('/revoke')
