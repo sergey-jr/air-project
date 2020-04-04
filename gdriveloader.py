@@ -34,7 +34,7 @@ class GDriveFiles:
             self.build_index()
             self.total_time = datetime.now()
             self.build_index_diff = (self.total_time - self.build_index_start).total_seconds()
-            self.total_time_diff = (self.total_time - self.total_time).total_seconds()
+            self.total_time_diff = (self.total_time - self.total_start).total_seconds()
 
     def get_timers_load(self):
         return {"total": {"start_time": self.total_start, "end_time": self.total_time, "passed": self.total_time_diff},
