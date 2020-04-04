@@ -4,7 +4,6 @@ from collections import Counter
 from datetime import datetime
 import json
 
-import chardet
 import nltk
 import textract
 from googleapiclient.http import MediaIoBaseDownload
@@ -28,31 +27,9 @@ class GDriveFiles:
     def load(self, fl=False):
         if not self.index_exists and not fl:
             self.total_start = datetime.now()
-            self.files = self.gdrive_get_all_files()
+            self.gdrive_get_all_files()
             self.retrieve_time = datetime.now()
             self.retrieve_time_diff = (self.retrieve_time - self.total_start).total_seconds()
-            self.download_start = datetime.now()
-            files = dict()
-            files_urls = dict()
-            for item in self.files:
-                if item["name"] not in files:
-                    self.gdrive_download_file(item)
-                    files[item["name"]] = 1
-                    files_urls[item["name"]] = item["webContentLink"]
-                else:
-                    item_ = item.copy()
-                    name, ext = os.path.splitext(item_["name"])
-                    name, ext = name.lower(), ext.lower()
-                    item_["name"] = "_".join([name, str(files[item["name"]])]) + ext
-                    self.gdrive_download_file(item_)
-                    files[item["name"]] += 1
-                    files_urls[item_["name"]] = item["webContentLink"]
-
-            with open(self.files_urls_path, "w") as json_file:
-                json.dump(files_urls, json_file)
-
-            self.load_time = datetime.now()
-            self.load_time_diff = (self.load_time - self.download_start).total_seconds()
             self.build_index_start = datetime.now()
             self.build_index()
             self.total_time = datetime.now()
@@ -63,43 +40,55 @@ class GDriveFiles:
         return {"total": {"start_time": self.total_start, "end_time": self.total_time, "passed": self.total_time_diff},
                 "retrieve": {"start_time": self.total_start, "end_time": self.retrieve_time,
                              "passed": self.retrieve_time_diff},
-                "download": {"start_time": self.download_start, "end_time": self.load_time,
-                             "passed": self.load_time_diff},
                 "build_index": {"start_time": self.build_index_start, "end_time": self.total_time,
                                 "passed": self.build_index_diff}, }
 
-    def filter_files(self, item):
+    @staticmethod
+    def filter_files(item):
         ext = item["name"].split(".")[-1] if "." in item["name"] else None
         allowed = ["doc", "docx", "pdf", "txt", "ppt", "pptx"]
-        base_condition = all([item["ownedByMe"],
-                              not os.path.exists(os.path.join(self.path_to_save, item["name"])),
-                              not item["name"].startswith("~")])
+        base_condition = not item["name"].startswith("~")
         return base_condition and ext is not None and ext in allowed
 
     def gdrive_get_all_files(self):
+        self.files = []
+        files = dict()
+        files_urls = dict()
         page_token = None
-        content = []
         query = "'me' in owners and mimeType != 'application/vnd.google-apps.folder'"
         while True:
             response = self.drive.files().list(q=query,
                                                spaces='drive',
-                                               fields='nextPageToken, files(id, name, mimeType, ownedByMe, webContentLink)',
+                                               fields='nextPageToken, files(id, name, mimeType, webViewLink)',
                                                pageToken=page_token).execute()
 
             page_token = response.get('nextPageToken', None)
 
-            content.extend(response.get('files', []))
+            for file in response.get('files', []):
+                if self.filter_files(file):
+                    if file["name"] not in files:
+                        self.gdrive_download_file(file)
+                        files[file["name"]] = 1
+                        files_urls[file["name"]] = {"id": file["id"], "link": file["webViewLink"]}
+                        self.files.append(file)
+                    else:
+                        file_duplicate = file.copy()
+                        name, ext = os.path.splitext(file_duplicate["name"])
+                        name, ext = name.lower(), ext.lower()
+                        file_duplicate["name"] = "_".join([name, str(files[file["name"]])]) + ext
+                        self.gdrive_download_file(file_duplicate)
+                        files[file["name"]] += 1
+                        files_urls[file_duplicate["name"]] = {"id": file["id"], "link": file["webViewLink"]}
+                        self.files.append(file_duplicate)
 
             if page_token is None:
                 break
 
         folder_name = "root"
-        res = []
-        if len(content) == 0:
+        if len(self.files) == 0:
             print("no files in folder {}".format(folder_name))
-        else:
-            res = list(filter(self.filter_files, content))
-        return res
+            return -1
+        return 0
 
     def gdrive_download_file(self, file):
         path_to_save = self.path_to_save
@@ -123,33 +112,19 @@ class GDriveFiles:
 
     @staticmethod
     def get_file_strings(path):
-        ext = os.path.splitext(path)[-1].lower()
-        # extract with textract for these data types
-        if ext in ['.pdf', '.html', '.docx', '.pptx', '.doc', '.ppt']:
+        texts = ''
+        try:
+            texts = io.open(path, 'r', ).read()
+        except Exception as e:
             try:
-                texts = str(textract.process(path, encoding='utf-8')).replace('\\n', '\n').replace('\\r', '').split(
-                    '\n')
-            except:
-                print("Couldn't extract with textract")
-                return None
-        # for txt data, use standard file read
-        elif ext in ['.txt', '.c', '.cpp', '.cs', '.js']:
-            try:
-                # first detect file encoding
-                with open(path, 'rb') as file:
-                    rawdata = file.read()
-                    result = chardet.detect(rawdata)
-                    charenc = result['encoding']
-                    with open(path, 'r', encoding=charenc) as file:
-                        texts = file.readlines()
-            except:
-                print("Couldn't read text file")
-                return None
-        else:
-            print("File format %s is not supported" % ext)
-            return None
-
-        # print(texts)
+                texts = str(textract.process(path, method='tesseract'))
+            except Exception as e1:
+                try:
+                    with open(path, 'rb') as f:
+                        texts = io.TextIOWrapper(f, encoding='cp1251').read()
+                except Exception as e2:
+                    print(path, e2)
+        texts = texts.replace('\\n', '\n').replace('\\r', '').split('\n')
         return texts
 
     @staticmethod
@@ -170,10 +145,13 @@ class GDriveFiles:
     def build_index(self):
         files_data = dict()
         for file in os.scandir(self.path_to_save):
-            strings = self.get_file_strings(file.path)
-            if strings:
-                files_data[file.name] = strings
-            os.remove(file.path)
+            ext = os.path.splitext(file.path)[-1].lower()
+            if ext != '.json':
+                strings = self.get_file_strings(file.path)
+                if strings != '':
+                    files_data[file.name] = strings
+                print("Preprocess of {} is {}".format(file.name, "OK" if strings != '' else "NOT OK"))
+                os.remove(file.path)
 
         res = {}
         for file in files_data:
