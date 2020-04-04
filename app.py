@@ -82,7 +82,11 @@ def search(query=None):
     context = {"search": query is not None}
     gindex = GDriveIndex(flask.session['credentials']['client_id'])
     if query is not None:
-        context["docs"] = gindex.find(query)
+        try:
+            context["docs"] = gindex.find(query)
+        except:
+            context["docs"] = None
+        context["query"] = query
     return render_template("search.html", **context)
 
 

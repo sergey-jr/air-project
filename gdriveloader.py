@@ -46,7 +46,8 @@ class GDriveFiles:
     @staticmethod
     def filter_files(item):
         ext = item["name"].split(".")[-1] if "." in item["name"] else None
-        allowed = ["doc", "docx", "pdf", "txt", "ppt", "pptx"]
+        allowed = ["doc", "docx", "ppt", "pptx"]
+        # "pdf", "txt"
         base_condition = not item["name"].startswith("~")
         return base_condition and ext is not None and ext in allowed
 
@@ -88,6 +89,8 @@ class GDriveFiles:
         if len(self.files) == 0:
             print("no files in folder {}".format(folder_name))
             return -1
+        with open(self.files_urls_path, "w") as json_file:
+            json.dump(files_urls, json_file)
         return 0
 
     def gdrive_download_file(self, file):
@@ -137,7 +140,7 @@ class GDriveFiles:
     def preprocess(self, file_data):
         res = []
         for row in file_data:
-            prep = nltk.word_tokenize(row)
+            prep = nltk.word_tokenize(row.lower())
             prep = [w for w in prep if self.is_apt(w)]
             res.extend(prep)
         return res
@@ -150,7 +153,6 @@ class GDriveFiles:
                 strings = self.get_file_strings(file.path)
                 if strings != '':
                     files_data[file.name] = strings
-                print("Preprocess of {} is {}".format(file.name, "OK" if strings != '' else "NOT OK"))
                 os.remove(file.path)
 
         res = {}
@@ -182,7 +184,7 @@ class GDriveIndex:
         if self.exists:
             index = json.load(open(self.path))
             postings = []
-            query_prep = nltk.word_tokenize(query)
+            query_prep = nltk.word_tokenize(query.lower())
             query_index = Counter(query_prep)
             for term in query_index.keys():
                 if term not in index:  # ignoring absent terms

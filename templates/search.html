@@ -3,13 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Google drive search app</title>
+    <script>
+        function search() {
+            let elem = document.getElementById("query");
+            console.log(elem.value);
+            location.href += "/" + String(elem.value)
+        }
+        function reset() {
+            location.href = location.origin + "/gdrive-search"
+        }
+    </script>
 </head>
 <body>
+{% if search %}
+    <input type="text" name="query" id="query" value="{{ query }}">
+    <button type="reset" id="reset_search" onclick="reset()">Reset Search</button>
+    <div>
+        {% if docs %}
+            {% for doc in docs %}
+            <p>
+                <a href="{{ doc[1]["link"] }}" target="_blank">{{ doc[0] }}</a>
+            </p>
+            {% endfor %}
+
+    </div>
+{% else %}
     <input type="text" name="query" id="query">
-    {% if search %}
-        <button type="reset" id="reset_search">Reset Search</button>
-    {% else %}
-        <button type="submit" id="search">Search</button>
-    {% endif %}
+    <button type="submit" id="search" onclick="search()">Search</button>
+{% endif %}
 </body>
 </html>
