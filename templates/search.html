@@ -1,35 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+{% include "head.html" %}
 <head>
-    <meta charset="UTF-8">
-    <title>Google drive search app</title>
     <script>
         function search() {
+
             let elem = document.getElementById("query");
-            console.log(elem.value);
-            location.href += "/" + String(elem.value)
+            let query = elem.value;
+            console.log(query);
+            axios.get('/api/search', {
+                params: {
+                    query: query
+                }
+            }).then(function (response) {
+                let data = response.data;
+                if (response.status === 200) {
+                    let docs = data.docs
+                }
+            });
         }
+
         function reset() {
             location.href = location.origin + "/gdrive-search"
         }
     </script>
 </head>
 <body>
-{% if search %}
-    <input type="text" name="query" id="query" value="{{ query }}">
-    <button type="reset" id="reset_search" onclick="reset()">Reset Search</button>
-    <div>
-        {% if docs %}
-            {% for doc in docs %}
-            <p>
-                <a href="{{ doc[1]["link"] }}" target="_blank">{{ doc[0] }}</a>
-            </p>
-            {% endfor %}
-
-    </div>
-{% else %}
+{% include "menu.html" %}
+<div class="container-fluid">
     <input type="text" name="query" id="query">
     <button type="submit" id="search" onclick="search()">Search</button>
-{% endif %}
+    <button type="reset" id="reset" onclick="reset()">Reset</button>
+</div>
 </body>
 </html>

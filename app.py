@@ -3,7 +3,7 @@
 import os
 
 import flask
-from flask import Flask, url_for, render_template
+from flask import Flask, url_for, render_template, request
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -24,7 +24,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
 API_SERVICE_NAME = 'drive'
 API_VERSION = 'v3'
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 # Note: A secret key is included in the sample so that it works.
 # If you use this code in your application, replace this with a truly secret
 # key. See https://flask.palletsprojects.com/quickstart/#sessions.
@@ -42,6 +42,26 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/search")
+def search_page():
+    return render_template("search.html")
+
+
+@app.route("/load")
+def load_page():
+    return render_template("load.html")
+
+
+@app.route("/reload")
+def reload_page():
+    return render_template("reload.html")
+
+
+@app.route("/test")
+def test_page():
+    return render_template("test.html")
+
+
 @app.route("/site-map")
 def site_map():
     links = []
@@ -55,30 +75,44 @@ def site_map():
     return render_template("all_links.html", links=links)
 
 
-@app.route('/load')
-@app.route('/reload')
-def load_files():
+def load(fl):
+    if 'credentials' not in flask.session:
+        return flask.redirect(flask.url_for('authorize'))
+
+    # Load credentials from the session.
+    credentials = google.oauth2.credentials.Credentials(
+        **flask.session['credentials'])
+
+    drive = googleapiclient.discovery.build(
+        API_SERVICE_NAME, API_VERSION, credentials=credentials)
+    gfiles = GDriveFiles(drive, flask.session['credentials']['client_id'])
+    gfiles.load(fl=fl)
+    context = {"loaded": gfiles.index_exists}
+    context.update(gfiles.get_timers_load())
+    return flask.jsonify(**context)
+
+
+@app.route('/api/load')
+def load_index():
     try:
-        if 'credentials' not in flask.session:
-            return flask.redirect('authorize')
-
-        # Load credentials from the session.
-        credentials = google.oauth2.credentials.Credentials(
-            **flask.session['credentials'])
-
-        drive = googleapiclient.discovery.build(
-            API_SERVICE_NAME, API_VERSION, credentials=credentials)
-        gfiles = GDriveFiles(drive, flask.session['credentials']['client_id'])
-        gfiles.load()
-        return render_template("load.html", **gfiles.get_timers_load())
+        return load(False)
     except Exception as ex:
         print(ex)
         return flask.redirect('authorize')
 
 
-@app.route('/gdrive-search')
-@app.route('/gdrive-search/<query>')
-def search(query=None):
+@app.route('/api/reload')
+def reload_index():
+    try:
+        return load(True)
+    except Exception as ex:
+        print(ex)
+        return flask.redirect('authorize')
+
+
+@app.route('/api/search', methods=["GET"])
+def gdrive_search():
+    query = request.args.get('query')
     context = {"search": query is not None}
     gindex = GDriveIndex(flask.session['credentials']['client_id'])
     if query is not None:
@@ -87,13 +121,13 @@ def search(query=None):
         except:
             context["docs"] = None
         context["query"] = query
-    return render_template("search.html", **context)
+    return flask.jsonify(**context)
 
 
-@app.route('/test')
+@app.route('/api/test')
 def test_api_request():
     if 'credentials' not in flask.session:
-        return flask.redirect('authorize')
+        return flask.redirect(flask.url_for('authorize'))
 
     # Load credentials from the session.
     credentials = google.oauth2.credentials.Credentials(
@@ -102,7 +136,8 @@ def test_api_request():
     drive = googleapiclient.discovery.build(
         API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
-    files = drive.files().list().execute()
+    files = drive.files().list(q="'me' in owners",
+                               fields='nextPageToken, files(id, name, mimeType, webViewLink)').execute()
 
     # Save credentials back to session in case access token was refreshed.
     # ACTION ITEM: In a production app, you likely want to save these

@@ -1,6 +1,10 @@
 {# all_links.html #}
-<ul>
-    {% for url, endpoint in links %}
-        <li><a href="{{ url }}">{{ endpoint }}</a></li>
-    {% endfor %}
-</ul>
+{% include "head.html" %}
+{% include "menu.html" %}
+<div class="container-fluid">
+    <ul class="list-group">
+        {% for url, endpoint in links %}
+            <li class="list-group-item"><a href="{{ url }}">{{ endpoint }}</a></li>
+        {% endfor %}
+    </ul>
+</div>

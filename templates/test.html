@@ -1,0 +1,22 @@
+{% include "head.html" %}
+<script>
+    axios.get('/api/test', {
+        params: {}
+    }).then(function (response) {
+        let data = response.data;
+        if (response.status === 200) {
+            let files = data.files;
+            let container = document.getElementById("files");
+            container.innerHTML = "<ul class= 'list-group'>";
+            files.forEach(function (item, index) {
+                container.innerHTML += `<li class='list-group-item' id='${item.id}'>
+                                        <a href='${item.webViewLink}'>${item.name}</a>
+                                        </li>`
+            });
+            container.innerHTML += "</ul>"
+        }
+    });
+</script>
+{% include "menu.html" %}
+<div class="container-fluid" id="files">
+</div>
