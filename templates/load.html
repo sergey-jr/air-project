@@ -6,7 +6,9 @@
         let data = response.data;
         if (response.status === 200) {
             let loaded = data.loaded;
-            let timers = {total: data.total, retrieve: data.retrieve, build_index: data.build_index}
+            let timers = {total: data.total, retrieve: data.retrieve, build_index: data.build_index};
+            $("#load").hide();
+            $("#reload").show();
         }
     });
 </script>

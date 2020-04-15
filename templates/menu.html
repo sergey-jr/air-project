@@ -1,10 +1,18 @@
 <body>
 <nav class="nav">
     <a class="nav-link" href="/">Home</a>
-    <a class="nav-link" href="/search">Search</a>
-    <a class="nav-link" id="load" href="/load">Load</a>
-    <a class="nav-link" id="reload" href="/reload">Reload</a>
+
+    {% if 'credentials' not in session %}
+        <a class="nav-link" href="/authorize">Login</a>
+    {% else %}
+        <a class="nav-link" href="/search">Search</a>
+        <a class="nav-link" id="load" href="/load">Load</a>
+        <a class="nav-link" id="reload" href="/reload">Reload</a>
+        <a class="nav-link" href="/test">Test</a>
+        <a class="nav-link" href="/logout">Logout</a>
+    {% endif %}
+
     <a class="nav-link" href="/site-map">Site-map</a>
-    <a class="nav-link" href="/test">Test</a>
+
 </nav>
 </body>

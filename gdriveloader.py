@@ -14,11 +14,12 @@ nltk.download("stopwords")
 
 
 class GDriveFiles:
-    def __init__(self, drive, client_id):
+    def __init__(self, drive, client_id, logger):
         self.drive = drive
         self.path_to_save = os.path.join("drive_files", client_id)
         self.index_path = os.path.join("drive_files", client_id, "index.json")
         self.files_urls_path = os.path.join("drive_files", client_id, "docs_urls.json")
+        self.logger = logger
 
     @property
     def index_exists(self):
@@ -87,7 +88,7 @@ class GDriveFiles:
 
         folder_name = "root"
         if len(self.files) == 0:
-            print("no files in folder {}".format(folder_name))
+            self.logger.error("no files in folder {}".format(folder_name))
             return -1
         with open(self.files_urls_path, "w") as json_file:
             json.dump(files_urls, json_file)
@@ -106,12 +107,12 @@ class GDriveFiles:
             done = False
             while done is False:
                 status, done = downloader.next_chunk()
-                print("Download {} {}%.".format(file_name, int(status.progress() * 100)))
+                self.logger.debug("Download {} {}%.".format(file_name, int(status.progress() * 100)))
 
             with io.open(file_path, 'wb') as f:
                 f.write(fh.getvalue())
         except Exception as e:
-            print(file_name, e)
+            self.logger.error(file_name, e)
 
     @staticmethod
     def get_file_strings(path):
@@ -126,7 +127,7 @@ class GDriveFiles:
                     with open(path, 'rb') as f:
                         texts = io.TextIOWrapper(f, encoding='cp1251').read()
                 except Exception as e2:
-                    print(path, e2)
+                    self.logger.error(path, e2)
         texts = texts.replace('\\n', '\n').replace('\\r', '').split('\n')
         return texts
 
