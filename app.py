@@ -93,20 +93,12 @@ def load(fl):
 
 @app.route('/api/load')
 def load_index():
-    try:
-        return load(False)
-    except Exception as ex:
-        app.logger.error(ex)
-        return redirect(url_for('authorize'))
+    return load(False)
 
 
 @app.route('/api/reload')
 def reload_index():
-    try:
-        return load(True)
-    except Exception as ex:
-        app.logger.error(ex)
-        return redirect(url_for('authorize'))
+    return load(True)
 
 
 @app.route('/api/search', methods=["GET"])
@@ -117,7 +109,7 @@ def gdrive_search():
     if query is not None:
         try:
             context["docs"] = gindex.find(query)
-        except:
+        except Exception as e:
             context["docs"] = None
         context["query"] = query
     return jsonify(**context)
@@ -214,6 +206,18 @@ def revoke():
 def revoke_page():
     revoke()
     return redirect(url_for("index"))
+
+
+@app.context_processor
+def utility_processor():
+    def index_exists():
+        if 'credentials' in session:
+            client_id = session['credentials']['client_id']
+            index_path = os.path.join("drive_files", client_id, "index.json")
+            return os.path.exists(index_path)
+        return False
+
+    return dict(index_exists=index_exists, debug=app.debug)
 
 
 def clear_credentials():

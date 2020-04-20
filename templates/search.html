@@ -7,7 +7,6 @@
 
             let elem = document.getElementById("query");
             let query = elem.value;
-            console.log(query);
             axios.get('/api/search', {
                 params: {
                     query: query
@@ -15,7 +14,15 @@
             }).then(function (response) {
                 let data = response.data;
                 if (response.status === 200) {
-                    let docs = data.docs
+                    let docs = data.docs;
+                    let file_list = "<ul class= 'list-group'>";
+                    docs.forEach(function (item, index) {
+                        file_list += `<li class='list-group-item' id='${item[1].id}'>
+                                        <a href='${item[1].link}'>${item[0]}</a>
+                                        </li>`
+                    });
+                    file_list += "</ul>";
+                    $("#files").html(file_list);
                 }
             });
         }
@@ -31,6 +38,7 @@
     <input type="text" name="query" id="query">
     <button type="submit" id="search" onclick="search()">Search</button>
     <button type="reset" id="reset" onclick="reset()">Reset</button>
+    <div id="files"></div>
 </div>
 </body>
 </html>

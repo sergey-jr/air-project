@@ -6,13 +6,19 @@
         <a class="nav-link" href="/authorize">Login</a>
     {% else %}
         <a class="nav-link" href="/search">Search</a>
-        <a class="nav-link" id="load" href="/load">Load</a>
-        <a class="nav-link" id="reload" href="/reload">Reload</a>
-        <a class="nav-link" href="/test">Test</a>
+        {% if not index_exists() %}
+            <a class="nav-link" id="load" href="/load">Load</a>
+        {% else %}
+            <a class="nav-link" id="reload" href="/reload">Reload</a>
+        {% endif %}
+        {% if debug %}
+            <a class="nav-link" href="/test">Test</a>
+        {% endif %}
         <a class="nav-link" href="/logout">Logout</a>
     {% endif %}
-
-    <a class="nav-link" href="/site-map">Site-map</a>
+    {% if debug %}
+        <a class="nav-link" href="/site-map">Site-map</a>
+    {% endif %}
 
 </nav>
 </body>
