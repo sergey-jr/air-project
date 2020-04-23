@@ -44,7 +44,7 @@ class GDriveFiles:
         return os.path.exists(self.index_path)
 
     def load(self, fl=False):
-        if not self.index_exists and not fl:
+        if not self.index_exists or not fl:
             self.total_start = datetime.now()
             self.logger.debug("Loading started")
             self.gdrive_get_all_files()

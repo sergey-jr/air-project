@@ -6,17 +6,24 @@
         let data = response.data;
         if (response.status === 200) {
             let files = data.files;
-            let file_list = "<ul class= 'list-group'>";
-            files.forEach(function (item, index) {
-                file_list += `<li class='list-group-item' id='${item.id}'>
-                                        <a href='${item.webViewLink}'>${item.name}</a>
-                                        </li>`
+            for (let i = 0; i < files.length; i++) {
+                let file = files[i];
+                file = [i + 1, `<a href='${file.webViewLink}'>${file.name}</a>`];
+                files[i] = file;
+            }
+            $('#results').DataTable({
+                data: files,
+                searching: false,
+                columns: [
+                    {title: "#"},
+                    {title: "File"},
+                ],
             });
-            file_list += "</ul>";
-            $("#files").html(file_list);
         }
     });
 </script>
 {% include "menu.html" %}
 <div class="container-fluid" id="files">
+    <table id="results" class="display compact" width="60%"></table>
 </div>
+{% include "footer.html" %}

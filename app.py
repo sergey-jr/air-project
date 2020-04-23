@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import json
 import os
 
 import google.oauth2.credentials
@@ -101,18 +101,58 @@ def reload_index():
     return load(True)
 
 
-@app.route('/api/search', methods=["GET"])
-def gdrive_search():
+def search():
     query = request.args.get('query')
-    context = {"search": query is not None}
+    context = {"search": query is not None, "docs": None, "query": None}
     gindex = GDriveIndex(session['credentials']['client_id'])
     if query is not None:
         try:
             context["docs"] = gindex.find(query)
         except Exception as e:
-            context["docs"] = None
+            pass
         context["query"] = query
+    return context
+
+
+@app.route('/api/search', methods=["GET"])
+def gdrive_search():
+    if 'credentials' not in session:
+        return redirect(url_for('authorize'))
+
+    context = search()
     return jsonify(**context)
+
+
+def remove(file_id):
+    credentials = google.oauth2.credentials.Credentials(**session['credentials'])
+    drive = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
+    try:
+        drive.files().delete(fileId=file_id).execute()
+        return 0
+    except:
+        return -1
+
+
+@app.route('/api/search_delete', methods=["GET"])
+def search_delete():
+    if 'credentials' not in session:
+        return redirect(url_for('authorize'))
+    context = search()
+    if context["docs"] is not None:
+        for item in context["docs"]:
+            remove(item[1]["id"])
+    return jsonify(**context)
+
+
+@app.route("/api/remove", methods=['POST'])
+def delete_file():
+    if 'credentials' not in session:
+        return redirect(url_for('authorize'))
+
+    data = json.loads(request.data)
+    file_id = data['file_id']
+    status = remove(file_id)
+    return jsonify(status=status)
 
 
 @app.route('/api/test')
@@ -208,18 +248,6 @@ def revoke_page():
     return redirect(url_for("index"))
 
 
-@app.context_processor
-def utility_processor():
-    def index_exists():
-        if 'credentials' in session:
-            client_id = session['credentials']['client_id']
-            index_path = os.path.join("drive_files", client_id, "index.json")
-            return os.path.exists(index_path)
-        return False
-
-    return dict(index_exists=index_exists, debug=app.debug)
-
-
 def clear_credentials():
     if 'credentials' in session:
         del session['credentials']
@@ -236,6 +264,18 @@ def exit_page():
     revoke()
     clear_credentials()
     return redirect(url_for("index"))
+
+
+@app.context_processor
+def utility_processor():
+    def index_exists():
+        if 'credentials' in session:
+            client_id = session['credentials']['client_id']
+            index_path = os.path.join("drive_files", client_id, "index.json")
+            return os.path.exists(index_path)
+        return False
+
+    return dict(index_exists=index_exists, debug=app.debug, user_loged_in='credentials' in session)
 
 
 def credentials_to_dict(credentials):

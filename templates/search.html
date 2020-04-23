@@ -2,35 +2,7 @@
 <html lang="en">
 {% include "head.html" %}
 <head>
-    <script>
-        function search() {
-
-            let elem = document.getElementById("query");
-            let query = elem.value;
-            axios.get('/api/search', {
-                params: {
-                    query: query
-                }
-            }).then(function (response) {
-                let data = response.data;
-                if (response.status === 200) {
-                    let docs = data.docs;
-                    let file_list = "<ul class= 'list-group'>";
-                    docs.forEach(function (item, index) {
-                        file_list += `<li class='list-group-item' id='${item[1].id}'>
-                                        <a href='${item[1].link}'>${item[0]}</a>
-                                        </li>`
-                    });
-                    file_list += "</ul>";
-                    $("#files").html(file_list);
-                }
-            });
-        }
-
-        function reset() {
-            location.href = location.origin + "/gdrive-search"
-        }
-    </script>
+    <script src="{{ url_for('static',filename='js/search.js') }}"></script>
 </head>
 <body>
 {% include "menu.html" %}
@@ -38,7 +10,10 @@
     <input type="text" name="query" id="query">
     <button type="submit" id="search" onclick="search()">Search</button>
     <button type="reset" id="reset" onclick="reset()">Reset</button>
+    <input type="checkbox" id="delete_all"><label for="delete_all">Delete</label>
     <div id="files"></div>
+    <table id="results" class="display compact" width="60%"></table>
 </div>
+{% include "footer.html" %}
 </body>
 </html>

@@ -4,15 +4,15 @@ LABEL maintainer="Sergey jr. Bakaleynik"
 
 WORKDIR /app
 
-COPY templates .
+COPY templates /app/templates
 
-COPY requirements.txt .
+COPY requirements.txt /app
 
-COPY gdriveloader.py .
+COPY gdriveloader.py /app
 
-COPY app.py .
+COPY app.py /app
 
-COPY client_id.json .
+COPY client_id.json /app
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -24,5 +24,4 @@ ENV GAPP_SECRET b'\xc4` \xae\xd4\x89\x1a9\xd5\x05\xc9RK\xed\xb2G'
 
 EXPOSE 8080
 
-#ENTRYPOINT ["python3", "app.py"]
-#RUN flask run -h 0.0.0.0 -p 8080
+ENTRYPOINT ["python3", "app.py"]
