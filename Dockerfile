@@ -4,15 +4,15 @@ LABEL maintainer="Sergey jr. Bakaleynik"
 
 WORKDIR /app
 
-COPY templates /app/templates
+COPY templates/ /app/templates
 
-COPY requirements.txt /app
+COPY requirements.txt /app/
 
-COPY gdriveloader.py /app
+COPY gdriveloader.py /app/
 
-COPY app.py /app
+COPY app.py /app/
 
-COPY client_id.json /app
+COPY client_id.json /app/
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1

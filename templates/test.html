@@ -1,27 +1,5 @@
 {% include "head.html" %}
-<script>
-    axios.get('/api/test', {
-        params: {}
-    }).then(function (response) {
-        let data = response.data;
-        if (response.status === 200) {
-            let files = data.files;
-            for (let i = 0; i < files.length; i++) {
-                let file = files[i];
-                file = [i + 1, `<a href='${file.webViewLink}'>${file.name}</a>`];
-                files[i] = file;
-            }
-            $('#results').DataTable({
-                data: files,
-                searching: false,
-                columns: [
-                    {title: "#"},
-                    {title: "File"},
-                ],
-            });
-        }
-    });
-</script>
+<script src="{{ url_for('static',filename='js/test.js') }}"></script>
 {% include "menu.html" %}
 <div class="container-fluid" id="files">
     <table id="results" class="display compact" width="60%"></table>
