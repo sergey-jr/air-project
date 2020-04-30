@@ -9,6 +9,7 @@ import requests
 from flask import Flask, url_for, render_template, request, redirect, session, jsonify
 
 from gdriveloader import GDriveFiles, GDriveIndex
+from norwig_spellcheck import NorwigSpellcheck
 
 # This variable specifies the name of a file that contains the OAuth 2.0
 # information for this application, including its client_id and client_secret.
@@ -106,10 +107,12 @@ def search():
     context = {"search": query is not None, "docs": None, "query": None}
     gindex = GDriveIndex(session['credentials']['client_id'])
     if query is not None:
+        spellchecker = NorwigSpellcheck(gindex)
+        query = spellchecker.correction(query)
         try:
             context["docs"] = gindex.find(query)
-        except Exception as e:
-            pass
+        except:
+            context["docs"] = None
         context["query"] = query
     return context
 
@@ -275,7 +278,7 @@ def utility_processor():
             return os.path.exists(index_path)
         return False
 
-    return dict(index_exists=index_exists, debug=app.debug, user_loged_in='credentials' in session)
+    return dict(index_exists=index_exists(), debug=app.debug, user_loged_in='credentials' in session)
 
 
 def credentials_to_dict(credentials):

@@ -145,7 +145,7 @@ class GDriveFiles:
             try:
                 texts = textract.process(path, extension=ext)
                 try:
-                    texts = texts.decode("utf-8", errors="ignore")
+                    texts = texts.decode("utf-8", errors="replace")
                 except:
                     texts = str(texts)
             except Exception as e1:
@@ -211,7 +211,6 @@ class GDriveIndex:
             index = json.load(open(self.index_path))
             postings = []
             query_index = Counter(preprocess(query))
-            terms = json.load(open(self.terms_path))['terms']
             for term in query_index.keys():
                 if term not in index:  # ignoring absent terms
                     continue
