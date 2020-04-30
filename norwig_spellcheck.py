@@ -1,10 +1,14 @@
+import json
+import os
 from collections import Counter
 from gdriveloader import preprocess
 
 
 class NorwigSpellcheck:
-    def __init__(self, index):
+    def __init__(self, client_id):
+        self.index_path = os.path.join("drive_files", client_id, "index.json")
         self.vocabulary = Counter()
+        index = json.load(open(self.index_path))
         for token in index:
             self.vocabulary[token] = sum(index[token].values())
 
@@ -29,7 +33,7 @@ class NorwigSpellcheck:
 
     def edits1(self, word):
         "All edits that are one edit away from `word`."
-        letters = 'abcdefghijklmnopqrstuvwxyz'
+        letters = 'abcdefghijklmnopqrstuvwxyz' + ''.join([chr(i) for i in range(ord('а'), ord('я') + 1)])
         splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
         deletes = [L + R[1:] for L, R in splits if R]
         transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R) > 1]

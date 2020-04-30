@@ -107,8 +107,9 @@ def search():
     context = {"search": query is not None, "docs": None, "query": None}
     gindex = GDriveIndex(session['credentials']['client_id'])
     if query is not None:
-        spellchecker = NorwigSpellcheck(gindex)
-        query = spellchecker.correction(query)
+        if gindex.exists:
+            spellchecker = NorwigSpellcheck(session['credentials']['client_id'])
+            query = spellchecker.correction(query)
         try:
             context["docs"] = gindex.find(query)
         except:

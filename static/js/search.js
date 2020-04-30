@@ -1,13 +1,16 @@
 function search() {
+    if ($.fn.DataTable.isDataTable('#results')) {
+        $('#results').DataTable().destroy();
+    }
+
+    $('#results tbody').empty();
     let checkbox = $("#delete_all");
-    $("#search").hide();
     checkbox.hide();
-    $("#reset").show();
+    $("label[for='delete_all']").hide();
     if (checkbox.prop("checked")) {
         search_delete();
     } else {
-        let elem = $("#query");
-        let query = elem.val();
+        let query = $("#query").val();
         axios.get('/api/search', {
             params: {
                 query: query
@@ -16,10 +19,14 @@ function search() {
             let data = response.data;
             if (response.status === 200) {
                 let docs = data.docs;
+                let resp_query = data.query;
+                if (resp_query !== query) {
+                    $("#query").val(resp_query);
+                }
                 if (docs != null) {
                     for (let i = 0; i < docs.length; i++) {
                         let doc = docs[i];
-                        doc = [i + 1, `<a href='${doc[1].link}'>${doc[0]}</a>`,
+                        doc = [i + 1, `<a href='${doc[1].link}' target="_blank">${doc[0]}</a>`,
                             `<img id="${doc[1].id}" class="icon-delete" src="static/icons/remove.png" alt="Delete">`];
                         docs[i] = doc;
                     }
@@ -96,8 +103,4 @@ function search_delete() {
             }
         });
     }
-}
-
-function reset() {
-    location.reload();
 }
