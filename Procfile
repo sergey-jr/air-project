@@ -1,1 +1,1 @@
-web: gunicorn app:app -b :8080 --log-file -
+web: gunicorn app:app -p 8080 --log-file -
