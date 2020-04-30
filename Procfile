@@ -1,1 +1,1 @@
-web: gunicorn myproject:app -b :8080 --log-file -
+web: gunicorn project:app -b :8080 --log-file -
