@@ -3,7 +3,8 @@
 This application developed for purpose of studying. This Project for Advanced Information Retrieval. 
 ## Features
 
-- building inverted index of files on user Google Drive (``ext=[.doc, .docx, .ppt, .pptx]``)
+- support next extensions: ``.doc, .docx, .ppt, .pptx``
+- building inverted index of files on user Google Drive
 - searching through index
 - deleting files by query and from search result
 - authentication
