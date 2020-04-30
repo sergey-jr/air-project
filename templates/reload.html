@@ -1,7 +1,7 @@
 {% include "head.html" %}
 <script>
     let fl = confirm("Reloading can take much time. Are you sure to reload?");
-    if(fl) {
+    if (fl) {
         axios.get('/api/reload', {
             params: {}
         }).then(function (response) {

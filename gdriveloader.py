@@ -1,19 +1,13 @@
 import io
+import json
 import os
 from collections import Counter
 from datetime import datetime
-import json
 
-import chardet
 import nltk
 import textract
 from googleapiclient.http import MediaIoBaseDownload
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import CountVectorizer
-import numpy as np
-
-nltk.download('punkt')
-nltk.download("stopwords")
 
 
 def is_apt(word):
